@@ -1,17 +1,20 @@
 <?php 
-echo "<pre>";
-print_r(find('options',23));
-echo "</pre>";
+//echo "<pre>";
+//print_r(find('options',23));
+//echo "</pre>";
+//echo "<pre>";
+//print_r(find('options',['subject_id'=>5,'description'=>'4.5萬']));
+//echo "</pre>";
 /* echo "<pre>";
 print_r(all('options'));
 echo "</pre>"; */
 
-//update('options',
-//        ['description'=>'50萬','total'=>200],
-//        8);
+update('options',['id'=>8,'description'=>'50萬','total'=>200]);
+insert('options',['description'=>'50萬','total'=>200]);
 
 //insert('options',['description'=>'60萬','subject_id'=>5,'total'=>0]);
-del('options',21);
+del('options',29);
+del('options',['subject_id'=>8]);
 
 function all($table){
     $dsn="mysql:host=localhost;charset=utf8;dbname=vote";
@@ -24,12 +27,27 @@ function all($table){
     return $rows;
 }
 
-function find($table,$id){
+function find($table,$arg){
 
     $dsn="mysql:host=localhost;charset=utf8;dbname=vote";
     $pdo=new PDO($dsn,'root','');
 
-    $sql="select * from `$table`  where `id`='$id' ";
+    $sql="select * from `$table`  where ";
+
+    if(is_array($arg)){
+        foreach($arg as $key => $value){
+
+            $tmp[]="`$key`='$value'";
+        }
+
+        $sql .= join(" && ",$tmp);
+    }else{
+
+        $sql .= " `id` = '$arg' ";
+        
+    }
+
+    echo $sql;
 
     $row=$pdo->query($sql)->fetch(PDO::FETCH_ASSOC);
 
@@ -37,7 +55,7 @@ function find($table,$id){
 }
 
 //一次更新一筆
-function update($table,$cols,$id){
+function update($table,$cols){
     $dsn="mysql:host=localhost;charset=utf8;dbname=vote";
     $pdo=new PDO($dsn,'root','');
 
@@ -45,19 +63,16 @@ function update($table,$cols,$id){
     // 'open_time'=>'2023-05-29',
     // 'close_time'=>'2023-06-05',
     //]
-    $tmp='';
+
     foreach($cols as $key => $value){
-
-       $tmp .= "`$key`='$value',";
-
+        if($key!='id'){
+            $tmp[]= "`$key`='$value'";
+        }
     }
-
-    //刪除前後的多餘逗號','
-    $tmp=trim($tmp,',');
 
     //`subject`='今天天氣很好吧?',`open_time`='2023-05-29',`close_time`='2023-06-05'
 
-    $sql="update `$table` set  $tmp where `id`='$id'";
+    $sql="update `$table` set  ".join(",",$tmp)." where `id`='{$cols['id']}'";
 
     $result=$pdo->exec($sql);
 
@@ -85,12 +100,34 @@ function insert($table,$cols){
 }
 
 
-function del($table,$id){
+function del($table,$arg){
     $dsn="mysql:host=localhost;charset=utf8;dbname=vote";
     $pdo=new PDO($dsn,'root','');
 
-    $sql="delete from `$table` where `id`='$id'";
+    $sql="delete from `$table` where ";
+    if(is_array($arg)){
+        foreach($arg as $key => $value){
 
+            $tmp[]="`$key`='$value'";
+        }
+
+        $sql .= join(" && ",$tmp);
+    }else{
+
+        $sql .= " `id` = '$arg' ";
+        
+    }
+
+    echo $sql;
     return $pdo->exec($sql);
+}
+
+function save($table,$cols){
+
+    if(isset($cols['id'])){
+        update($table,$cols);
+    }else{
+        insert($table,$cols);
+    }
 }
 ?>
